@@ -1,5 +1,5 @@
 -- ==========================================================
--- SCRIPT DEPTH (B-35) - VERSIÓN FINAL MODIFICADA
+-- SCRIPT DEPTH (B-35) - VERSIÓN ANIMADA SIN PARTÍCULAS
 -- ==========================================================
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
@@ -7,8 +7,14 @@ local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
 local Camara = workspace.CurrentCamera
 
-local TEXTURA_ID = "rbxassetid://11278229112"
-local TAMANO_ENTIDAD = Vector3.new(12, 12, 0.2)
+local TEXTURAS_ANIMACION = {
+    "rbxassetid://85791525884743",
+    "rbxassetid://125330553258021",
+    "rbxassetid://87774855454742",
+    "rbxassetid://96333368288866",
+    "rbxassetid://79689052117568"
+}
+local TAMANO_ENTIDAD = Vector3.new(15, 15, 0.2)
 
 local VELOCIDAD_ULTRA = 430 
 local PASO_TIEMPO = 0.010 
@@ -43,9 +49,9 @@ entidad.CFrame = posicionSpawn * CFrame.new(0, 3, 0)
 entidad.Parent = workspace
 
 local decalFrente = Instance.new("Decal")
-decalFrente.Texture = TEXTURA_ID; decalFrente.Face = Enum.NormalId.Front; decalFrente.Parent = entidad
+decalFrente.Texture = TEXTURAS_ANIMACION[1]; decalFrente.Face = Enum.NormalId.Front; decalFrente.Parent = entidad
 local decalAtras = Instance.new("Decal")
-decalAtras.Texture = TEXTURA_ID; decalAtras.Face = Enum.NormalId.Back; decalAtras.Parent = entidad
+decalAtras.Texture = TEXTURAS_ANIMACION[1]; decalAtras.Face = Enum.NormalId.Back; decalAtras.Parent = entidad
 
 local luzCercana = Instance.new("PointLight")
 luzCercana.Color = Color3.fromRGB(0, 191, 255)
@@ -53,7 +59,23 @@ luzCercana.Range = 25
 luzCercana.Brightness = 0
 luzCercana.Parent = entidad
 
-print("[DEPTH] Núcleo cargado correctamente.")
+print("[DEPTH] Núcleo cargado con animación de texturas.")
+
+-- Animación de la textura (fotogramas)
+task.spawn(function()
+    local index = 1
+    while entidad and entidad.Parent do
+        local idActual = TEXTURAS_ANIMACION[index]
+        decalFrente.Texture = idActual
+        decalAtras.Texture = idActual
+        
+        index = index + 1
+        if index > #TEXTURAS_ANIMACION then
+            index = 1
+        end
+        task.wait(0.032)
+    end
+end)
 
 local anguloGlitchY = 0
 local offsetGlitchVector = Vector3.new(0, 0, 0)
@@ -159,42 +181,6 @@ task.spawn(function()
 		end
 	end
 end)
-
-local function generarParticulasGlitchEnSala(sala)
-    if not sala or not entidad or not entidad.Parent then return end
-    local centroSala = sala:FindFirstChild("RoomStart") or sala:FindFirstChild("Floor") or sala:FindFirstChild("PrimaryPart")
-    if not centroSala or not centroSala:IsA("BasePart") then return end
-    
-    for i = 1, math.random(12, 18) do
-        local offsetAleatorio = Vector3.new(math.random(-25, 25), math.random(0, 10), math.random(-25, 25))
-        local contenedorParticulas = Instance.new("Part")
-        contenedorParticulas.Size = Vector3.new(1, 1, 1)
-        contenedorParticulas.Transparency = 1
-        contenedorParticulas.Anchored = true
-        contenedorParticulas.CanCollide = false
-        contenedorParticulas.Position = centroSala.Position + offsetAleatorio
-        contenedorParticulas.Parent = workspace
-        CollectionService:AddTag(contenedorParticulas, "BasuraEstela")
-        
-        local emisorParticulas = Instance.new("ParticleEmitter")
-        emisorParticulas.Texture = "rbxassetid://137039759140710" 
-        emisorParticulas.Color = ColorSequence.new(Color3.fromRGB(0, 170, 255))
-        emisorParticulas.Size = NumberSequence.new({NumberKeypoint.new(0, 0.8), NumberKeypoint.new(1, 0)})
-        emisorParticulas.Rate = 350 
-        emisorParticulas.Speed = NumberRange.new(8, 28)
-        emisorParticulas.Lifetime = NumberRange.new(0.4, 1.1)
-        emisorParticulas.SpreadAngle = Vector2.new(360, 360)
-        emisorParticulas.Parent = contenedorParticulas
-        
-        task.delay(0.35, function()
-            if emisorParticulas then emisorParticulas.Enabled = false end
-            task.wait(1.5)
-            if contenedorParticulas then contenedorParticulas:Destroy() end
-        end)
-    end
-end
-
-_G.B35_Shared.SoltarParticulas = generarParticulasGlitchEnSala
 
 local conexionTemblor = RunService.RenderStepped:Connect(function()
     if not entidad or not entidad.Parent then return end
@@ -342,10 +328,6 @@ task.spawn(function()
         for _, sala in ipairs(salas) do
             if not entidad or not entidad.Parent then break end
             
-            if _G.B35_Shared and _G.B35_Shared.SoltarParticulas then
-                _G.B35_Shared.SoltarParticulas(sala)
-            end
-            
             local rutaInterna = sala:FindFirstChild("Waypoints") or sala:FindFirstChild("Nodes") or sala:FindFirstChild("Path") or sala:FindFirstChild("Ruta")
             local nodosExistentes = {}
             
@@ -393,5 +375,5 @@ task.spawn(function()
     if sonidoAdvertencia then sonidoAdvertencia:Destroy() end
     if entidad then entidad:Destroy() end
     _G.B35_Shared = nil
-    print("[SISTEMA] Depth completó sus 3 pasadas.")
+    print("[SISTEMA] Depth completó sus 3 pasadas con texturas animadas.")
 end)
