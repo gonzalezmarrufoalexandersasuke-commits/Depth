@@ -1,133 +1,29 @@
 -- ==========================================================
--- SCRIPT REDTH/DEPTH - PARTE 1: CORE, TEXTURA Y JUMPSCARE CON CUTSCENE
+-- SCRIPT DEPTH (B-35) - VERSIÓN FINAL MODIFICADA
 -- ==========================================================
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
-local SoundService = game:GetService("SoundService")
-local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local localPlayer = Players.LocalPlayer
+local Camara = workspace.CurrentCamera
 
--- Nueva textura e ID asignados
-local TEXTURA_ID = "rbxassetid://10834791218"
-local AUDIO_JUMPSCARE = "rbxassetid://87799694751890"
+local TEXTURA_ID = "rbxassetid://11278229112"
 local TAMANO_ENTIDAD = Vector3.new(12, 12, 0.2)
 
--- Configuración de la Cutscene de Muerte
-local imagenesMuerte = {
-	"rbxassetid://114297442521143",
-	"rbxassetid://140307342234836",
-	"rbxassetid://109463796236234",
-	"rbxassetid://123272529113706",
-	"rbxassetid://75339482580799",
-	"rbxassetid://79195444312238",
-	"rbxassetid://99437466259541",
-	"rbxassetid://82846097797262",
-	"rbxassetid://135375948659142",
-	"rbxassetid://132424274886104",
-	"rbxassetid://135177894319680",
-	"rbxassetid://128474841804390",
-	"rbxassetid://95351989640094"
-}
+local VELOCIDAD_ULTRA = 430 
+local PASO_TIEMPO = 0.010 
 
-local dialogosMuerte = {
-	"Nos Volvemos A Ver..",
-	"Te Dije Que Tuvieras Cuidado, Ahora Porque?",
-	"Ohh..",
-	"Te Encontraste Con El Hermano De Redth",
-	"Depth",
-	"Es Prácticamente Igual A Redth",
-	"Tiene La Misma Función",
-	"Pero El Se Anuncia Iluminando La Habitación De Azul",
-	"Ten Cuidado!",
-	"Adiós"
-}
-
-local function ejecutarCinematicaMuerte()
-	task.wait(4)
-
-	local sonido = Instance.new("Sound")
-	sonido.SoundId = "rbxassetid://1837237884"
-	sonido.Parent = SoundService
-	sonido:Play()
-
-	local Guipantalla = Instance.new("ScreenGui")
-	Guipantalla.Name = "CinematicaMuerte"
-	Guipantalla.ResetOnSpawn = false
-	Guipantalla.IgnoreGuiInset = true
-	Guipantalla.DisplayOrder = 999
-	Guipantalla.Parent = localPlayer:WaitForChild("PlayerGui")
-
-	local fondo = Instance.new("Frame")
-	fondo.Size = UDim2.new(1, 0, 1, 0)
-	fondo.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	fondo.BackgroundTransparency = 0
-	fondo.Parent = Guipantalla
-
-	local etiquetaImagen = Instance.new("ImageLabel")
-	etiquetaImagen.Size = UDim2.new(0.65, 0, 0.65, 0)
-	etiquetaImagen.Position = UDim2.new(0.5, 0, 0.45, 0)
-	etiquetaImagen.AnchorPoint = Vector2.new(0.5, 0.5)
-	etiquetaImagen.BackgroundTransparency = 1
-	etiquetaImagen.ScaleType = Enum.ScaleType.Fit
-	etiquetaImagen.ZIndex = 1
-	etiquetaImagen.Parent = fondo
-
-	local textoDialogo = Instance.new("TextLabel")
-	textoDialogo.Size = UDim2.new(0.9, 0, 0.15, 0)
-	textoDialogo.Position = UDim2.new(0.5, 0, 0.85, 0)
-	textoDialogo.AnchorPoint = Vector2.new(0.5, 0.5)
-	textoDialogo.BackgroundTransparency = 1
-	textoDialogo.TextColor3 = Color3.fromRGB(225, 180, 20)
-	textoDialogo.TextStrokeTransparency = 0
-	textoDialogo.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-	textoDialogo.TextScaled = true
-	textoDialogo.Font = Enum.Font.FredokaOne
-	textoDialogo.ZIndex = 10
-	textoDialogo.Text = ""
-	textoDialogo.Parent = fondo
-
-	local dialogoTerminado = false
-
-	task.spawn(function()
-		for _, texto in ipairs(dialogosMuerte) do
-			textoDialogo.Text = texto
-			task.wait(3)
-		end
-		
-		dialogoTerminado = true
-		textoDialogo.Text = ""
-		
-		TweenService:Create(sonido, TweenInfo.new(1.5), {Volume = 0}):Play()
-		etiquetaImagen.Visible = false
-		task.wait(1)
-
-		local transicion = TweenService:Create(fondo, TweenInfo.new(2), {BackgroundTransparency = 1})
-		transicion:Play()
-		transicion.Completed:Wait()
-
-		sonido:Destroy()
-		Guipantalla:Destroy()
-	end)
-
-	task.spawn(function()
-		while not dialogoTerminado do
-			for _, idImagen in ipairs(imagenesMuerte) do
-				if dialogoTerminado then break end
-				etiquetaImagen.Image = idImagen
-				for repeticion = 1, 2 do
-					task.wait(0.05)
-				end
-			end
-		end
-	end)
-end
+local AUDIO_ADVERTENCIA = "rbxassetid://138175227296034"
+local AUDIO_MOVIMIENTO_A = "rbxassetid://72677561439951"
+local AUDIO_MOVIMIENTO_B = "rbxassetid://72677561439951"
+local AUDIO_JUMPSCARE = "rbxassetid://87799694751890"
 
 local currentRooms = workspace:FindFirstChild("CurrentRooms")
 if not currentRooms then
     error("¡Error! No se encontró 'CurrentRooms'.")
 end
 
-local entidadPrevia = workspace:FindFirstChild("IA_Rush_Redth")
+local entidadPrevia = workspace:FindFirstChild("IA_Rush_B35")
 if entidadPrevia then entidadPrevia:Destroy() end
 
 local sala1 = currentRooms:FindFirstChild("0") or currentRooms:FindFirstChild("1")
@@ -138,7 +34,7 @@ end
 local posicionSpawn = puertaSpawn and puertaSpawn.CFrame or CFrame.new(0, 5, 0)
 
 local entidad = Instance.new("Part")
-entidad.Name = "IA_Rush_Redth"
+entidad.Name = "IA_Rush_B35"
 entidad.Size = TAMANO_ENTIDAD
 entidad.Transparency = 1
 entidad.Anchored = true
@@ -151,7 +47,13 @@ decalFrente.Texture = TEXTURA_ID; decalFrente.Face = Enum.NormalId.Front; decalF
 local decalAtras = Instance.new("Decal")
 decalAtras.Texture = TEXTURA_ID; decalAtras.Face = Enum.NormalId.Back; decalAtras.Parent = entidad
 
-print("[PARTE 1] Núcleo de Redth cargado correctamente.")
+local luzCercana = Instance.new("PointLight")
+luzCercana.Color = Color3.fromRGB(0, 191, 255)
+luzCercana.Range = 25
+luzCercana.Brightness = 0
+luzCercana.Parent = entidad
+
+print("[DEPTH] Núcleo cargado correctamente.")
 
 local anguloGlitchY = 0
 local offsetGlitchVector = Vector3.new(0, 0, 0)
@@ -225,8 +127,6 @@ local function escanearSeguridadArmario(personaje)
 	return false
 end
 
--- Escaneo de ataque con sonido de jumpscare y cinematica de muerte
-local yaAtaco = false
 task.spawn(function()
 	while task.wait(0.03) do
 		if not entidad or not entidad.Parent then break end
@@ -234,50 +134,31 @@ task.spawn(function()
 		if personaje and personaje:FindFirstChild("HumanoidRootPart") and personaje:FindFirstChildOfClass("Humanoid") then
 			local hum = personaje:FindFirstChildOfClass("Humanoid")
 			if hum.Health <= 0 then continue end
-			if (entidad.Position - personaje.HumanoidRootPart.Position).Magnitude < 22 then
+			local distancia = (entidad.Position - personaje.HumanoidRootPart.Position).Magnitude
+			
+			if distancia < 40 then
+				luzCercana.Brightness = 8
+			else
+				luzCercana.Brightness = 0
+			end
+
+			if distancia < 22 then
 				if escanearSeguridadArmario(personaje) then
-					-- Escondido seguro
+					-- Seguro
 				else
-					if yaAtaco then continue end
-					yaAtaco = true
-					
-					localPlayer:SetAttribute("AsesinadoPorRedth", true)
-					
-					-- Jumpscare Audio
-					local pGui = localPlayer:WaitForChild("PlayerGui", 2) or workspace.CurrentCamera
-					local jumpscareSound = Instance.new("Sound")
-					jumpscareSound.SoundId = AUDIO_JUMPSCARE
-					jumpscareSound.Volume = 5
-					jumpscareSound.Parent = pGui
-					jumpscareSound:Play()
-					
+					localPlayer:SetAttribute("AsesinadoPorB35", true)
+					local jsSound = Instance.new("Sound")
+					jsSound.SoundId = AUDIO_JUMPSCARE
+					jsSound.Volume = 5
+					jsSound.Parent = Camara
+					jsSound:Play()
+					task.wait(0.01)
 					hum.Health = 0
-					
-					-- Se dispara la cinemática tras eliminar al jugador
-					task.spawn(ejecutarCinematicaMuerte)
 				end
 			end
 		end
 	end
 end)
--- ==========================================================
--- SCRIPT REDTH - PARTE 2: PARTÍCULAS MASIVAS Y MEJORA DE TEMBLOR
--- ==========================================================
-local CollectionService = game:GetService("CollectionService")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local localPlayer = Players.LocalPlayer
-local Camara = workspace.CurrentCamera
-
-for i = 1, 50 do
-    if _G.B35_Shared and _G.B35_Shared.Entidad then break end
-    task.wait(0.1)
-end
-
-local entidad = _G.B35_Shared and _G.B35_Shared.Entidad
-if not entidad then error("Error: No se enlazó la Parte 1.") end
-
-print("[PARTE 2] Sistema de partículas explosivas y temblor inyectado para Redth.")
 
 local function generarParticulasGlitchEnSala(sala)
     if not sala or not entidad or not entidad.Parent then return end
@@ -295,29 +176,18 @@ local function generarParticulasGlitchEnSala(sala)
         contenedorParticulas.Parent = workspace
         CollectionService:AddTag(contenedorParticulas, "BasuraEstela")
         
-        local emisorCirculos = Instance.new("ParticleEmitter")
-        emisorCirculos.Texture = "rbxassetid://6079375253" 
-        emisorCirculos.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0)) -- Tono rojo para Redth
-        emisorCirculos.Size = NumberSequence.new({NumberKeypoint.new(0, 0.4), NumberKeypoint.new(1, 0)})
-        emisorCirculos.Rate = 350 
-        emisorCirculos.Speed = NumberRange.new(8, 25)
-        emisorCirculos.Lifetime = NumberRange.new(0.5, 1.2)
-        emisorCirculos.SpreadAngle = Vector2.new(360, 360)
-        emisorCirculos.Parent = contenedorParticulas
-        
-        local emisorCuadrados = Instance.new("ParticleEmitter")
-        emisorCuadrados.Texture = "rbxassetid://258129505" 
-        emisorCuadrados.Color = ColorSequence.new(Color3.fromRGB(150, 0, 0))
-        emisorCuadrados.Size = NumberSequence.new({NumberKeypoint.new(0, 0.5), NumberKeypoint.new(1, 0)})
-        emisorCuadrados.Rate = 350 
-        emisorCuadrados.Speed = NumberRange.new(8, 28)
-        emisorCuadrados.Lifetime = NumberRange.new(0.4, 1.1)
-        emisorCuadrados.SpreadAngle = Vector2.new(360, 360)
-        emisorCuadrados.Parent = contenedorParticulas
+        local emisorParticulas = Instance.new("ParticleEmitter")
+        emisorParticulas.Texture = "rbxassetid://137039759140710" 
+        emisorParticulas.Color = ColorSequence.new(Color3.fromRGB(0, 170, 255))
+        emisorParticulas.Size = NumberSequence.new({NumberKeypoint.new(0, 0.8), NumberKeypoint.new(1, 0)})
+        emisorParticulas.Rate = 350 
+        emisorParticulas.Speed = NumberRange.new(8, 28)
+        emisorParticulas.Lifetime = NumberRange.new(0.4, 1.1)
+        emisorParticulas.SpreadAngle = Vector2.new(360, 360)
+        emisorParticulas.Parent = contenedorParticulas
         
         task.delay(0.35, function()
-            if emisorCirculos then emisorCirculos.Enabled = false end
-            if emisorCuadrados then emisorCuadrados.Enabled = false end
+            if emisorParticulas then emisorParticulas.Enabled = false end
             task.wait(1.5)
             if contenedorParticulas then contenedorParticulas:Destroy() end
         end)
@@ -354,65 +224,6 @@ task.spawn(function()
     while entidad and entidad.Parent do task.wait(0.2) end
     if conexionTemblor then conexionTemblor:Disconnect() end
 end)
--- ==========================================================
--- SCRIPT REDTH - PARTE 3: OLEADAS, LUZ ROJA Y AUDIOS
--- ==========================================================
-local Players = game:GetService("Players")
-local localPlayer = Players.LocalPlayer
-
-local VELOCIDAD_ULTRA = 430 
-local PASO_TIEMPO = 0.010 
-
--- Sonidos actualizados según tus indicaciones
-local AUDIO_ADVERTENCIA = "rbxassetid://130563172782113"
-local AUDIO_MOVIMIENTO = "rbxassetid://72677561439951"
-
-local currentRooms = workspace:FindFirstChild("CurrentRooms")
-if not currentRooms then return end
-
-if not _G.B35_Shared or not _G.B35_Shared.Entidad then
-    error("Error: No se detectó el entorno físico de las fases previas.")
-end
-
-local entidad = _G.B35_Shared.Entidad
-
--- Función para iluminar de rojo la habitación donde está el jugador cuando suena la advertencia
-local function iluminarHabitacionJugadorRojo()
-    local personaje = localPlayer.Character
-    if not personaje or not personaje:FindFirstChild("HumanoidRootPart") then return end
-    
-    local posJugador = personaje.HumanoidRootPart.Position
-    local salaActual = nil
-    local menorDistancia = math.huge
-    
-    for _, sala in ipairs(currentRooms:GetChildren()) do
-        if tonumber(sala.Name) then
-            local centro = sala:FindFirstChild("RoomStart") or sala:FindFirstChild("Floor") or sala:FindFirstChild("PrimaryPart")
-            if centro and centro:IsA("BasePart") then
-                local dist = (posJugador - centro.Position).Magnitude
-                if dist < menorDistancia then
-                    menorDistancia = dist
-                    salaActual = sala
-                end
-            end
-        end
-    end
-    
-    if salaActual then
-        task.spawn(function()
-            -- Parpadeo en color rojo
-            for p = 1, 6 do
-                for _, objeto in ipairs(salaActual:GetDescendants()) do
-                    if objeto:IsA("Light") or objeto:IsA("PointLight") or objeto:IsA("SpotLight") or objeto:IsA("SurfaceLight") then
-                        objeto.Enabled = (p % 2 == 1)
-                        objeto.Color = Color3.fromRGB(255, 0, 0)
-                    end
-                end
-                task.wait(0.12)
-            end
-        end)
-    end
-end
 
 local function romperLucesDeHabitaciones()
     for _, sala in ipairs(currentRooms:GetChildren()) do
@@ -429,31 +240,64 @@ local function romperLucesDeHabitaciones()
     end
 end
 
+local function iluminarHabitacionJugadorAzulFuerte()
+    local personaje = localPlayer.Character
+    if not personaje or not personaje:FindFirstChild("HumanoidRootPart") then return end
+    local posJugador = personaje.HumanoidRootPart.Position
+    
+    local salaActual = nil
+    local menorDistancia = math.huge
+    for _, sala in ipairs(currentRooms:GetChildren()) do
+        local centro = sala:FindFirstChild("RoomStart") or sala:FindFirstChild("Floor") or sala:FindFirstChild("PrimaryPart")
+        if centro and centro:IsA("BasePart") then
+            local dist = (centro.Position - posJugador).Magnitude
+            if dist < menorDistancia then
+                menorDistancia = dist
+                salaActual = sala
+            end
+        end
+    end
+    
+    if salaActual then
+        local luzTemporal = Instance.new("PointLight")
+        luzTemporal.Color = Color3.fromRGB(0, 0, 255)
+        luzTemporal.Range = 60
+        luzTemporal.Brightness = 10
+        
+        local centroSala = salaActual:FindFirstChild("RoomStart") or salaActual:FindFirstChild("Floor") or salaActual:FindFirstChild("PrimaryPart")
+        if centroSala and centroSala:IsA("BasePart") then
+            luzTemporal.Parent = centroSala
+        else
+            luzTemporal.Parent = personaje.HumanoidRootPart
+        end
+        
+        task.delay(3.0, function()
+            if luzTemporal then luzTemporal:Destroy() end
+        end)
+    end
+end
+
 task.spawn(function()
     local pGui = localPlayer:WaitForChild("PlayerGui", 5)
 	local contenedorAudio = pGui or workspace.CurrentCamera
 
-    -- Sonido de advertencia inicial + Luces rojas parpadeando
-	local sonidoAdv1 = Instance.new("Sound")
-	sonidoAdv1.SoundId = AUDIO_ADVERTENCIA; sonidoAdv1.Volume = 3; sonidoAdv1.Parent = contenedorAudio; sonidoAdv1:Play()
+	local sonidoAdvertencia = Instance.new("Sound")
+	sonidoAdvertencia.SoundId = AUDIO_ADVERTENCIA
+    sonidoAdvertencia.Volume = 5
+    sonidoAdvertencia.Parent = contenedorAudio
     
-    iluminarHabitacionJugadorRojo()
+    iluminarHabitacionJugadorAzulFuerte()
+    sonidoAdvertencia:Play()
 	
-    -- Segunda copia del sonido producida a los 1.5 segundos
-    task.delay(1.5, function()
-        local sonidoAdv2 = Instance.new("Sound")
-        sonidoAdv2.SoundId = AUDIO_ADVERTENCIA; sonidoAdv2.Volume = 3; sonidoAdv2.Parent = contenedorAudio; sonidoAdv2:Play()
-        task.wait(4)
-        sonidoAdv2:Destroy()
-    end)
-
 	task.wait(3.5) 
 
-    -- Sonido de movimiento único asignado
-    local soundMov = Instance.new("Sound")
-    soundMov.SoundId = AUDIO_MOVIMIENTO; soundMov.Volume = 3; soundMov.Looped = true; soundMov.Parent = contenedorAudio; soundMov:Play()
+    local soundA = Instance.new("Sound")
+    soundA.SoundId = AUDIO_MOVIMIENTO_A; soundA.Volume = 6; soundA.Looped = true; soundA.Parent = contenedorAudio; soundA:Play()
+    
+    local soundB = Instance.new("Sound")
+    soundB.SoundId = AUDIO_MOVIMIENTO_B; soundB.Volume = 6; soundB.Looped = true; soundB.Parent = contenedorAudio; soundB:Play()
 
-    for pasada = 1, 2 do
+    for pasada = 1, 3 do
         if not entidad or not entidad.Parent then break end
 
         local function moverFisicamenteHacia(posicionDestino, esPuerta)
@@ -517,9 +361,9 @@ task.spawn(function()
                     local distB = (entidad.Position - b.Position).Magnitude
                     
                     if pasada % 2 == 1 then
-                        return distA < distB
+                        return distA < distB 
                     else
-                        return distA > distB
+                        return distA > distB 
                     end
                 end)
             end
@@ -545,10 +389,9 @@ task.spawn(function()
 
     romperLucesDeHabitaciones()
 
-    soundMov:Destroy()
-    if sonidoAdv1 then sonidoAdv1:Destroy() end
+    soundA:Destroy(); soundB:Destroy()
+    if sonidoAdvertencia then sonidoAdvertencia:Destroy() end
     if entidad then entidad:Destroy() end
     _G.B35_Shared = nil
-    print("[SISTEMA] Redth completó todas las pasadas.")
+    print("[SISTEMA] Depth completó sus 3 pasadas.")
 end)
-
