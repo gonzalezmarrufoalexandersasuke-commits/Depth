@@ -1,5 +1,5 @@
 -- ==========================================================
--- SCRIPT DEPTH (B-35) - VERSIÓN ANIMADA SIN PARTÍCULAS
+-- SCRIPT DEPTH (B-35) - VELOCIDAD MODERADA Y SOLO ANIMACIÓN
 -- ==========================================================
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
@@ -16,7 +16,8 @@ local TEXTURAS_ANIMACION = {
 }
 local TAMANO_ENTIDAD = Vector3.new(15, 15, 0.2)
 
-local VELOCIDAD_ULTRA = 430 
+-- Velocidad reducida para que se alcance a apreciar la animación
+local VELOCIDAD_ULTRA = 180 
 local PASO_TIEMPO = 0.010 
 
 local AUDIO_ADVERTENCIA = "rbxassetid://138175227296034"
@@ -59,9 +60,9 @@ luzCercana.Range = 25
 luzCercana.Brightness = 0
 luzCercana.Parent = entidad
 
-print("[DEPTH] Núcleo cargado con animación de texturas.")
+print("[DEPTH] Animación en loop y movimiento ajustado cargados.")
 
--- Animación de la textura (fotogramas)
+-- Animación de la textura en bucle continuo
 task.spawn(function()
     local index = 1
     while entidad and entidad.Parent do
@@ -77,45 +78,9 @@ task.spawn(function()
     end
 end)
 
-local anguloGlitchY = 0
-local offsetGlitchVector = Vector3.new(0, 0, 0)
-
 _G.B35_Shared = {
-    Entidad = entidad,
-    Angulo = 0,
-    Offset = Vector3.new(0,0,0)
+    Entidad = entidad
 }
-
-task.spawn(function()
-	while entidad and entidad.Parent do
-		task.wait(0.06)
-		if not entidad.Parent then break end; anguloGlitchY = -28
-		task.wait(0.1)
-		if not entidad.Parent then break end; anguloGlitchY = 42
-		task.wait(0.04)
-		if not entidad.Parent then break end; anguloGlitchY = -15
-		task.wait(0.09)
-		if not entidad.Parent then break end; anguloGlitchY = 35
-		task.wait(0.05)
-		if not entidad.Parent then break end; anguloGlitchY = -49
-		task.wait(0.12)
-		if not entidad.Parent then break end; anguloGlitchY = 22
-		task.wait(0.07)
-		if not entidad.Parent then break end; anguloGlitchY = -8
-        if _G.B35_Shared then _G.B35_Shared.Angulo = anguloGlitchY end
-	end
-end)
-
-task.spawn(function()
-	while task.wait(0.02) do
-		if not entidad or not entidad.Parent then break end
-		local offsetX = math.random(-2, 2)
-		local offsetY = math.random(-3, 3)
-		local offsetZ = math.random(-2, 3)
-		offsetGlitchVector = Vector3.new(offsetX, offsetY, offsetZ)
-		if _G.B35_Shared then _G.B35_Shared.Offset = offsetGlitchVector end
-	end
-end)
 
 local function escanearSeguridadArmario(personaje)
 	if not personaje then return false end
@@ -303,12 +268,8 @@ task.spawn(function()
                 local direccionNormalizada = vectorDireccion.Unit
                 local nuevaPosicion = posicionActual + (direccionNormalizada * avancePorFotograma)
                 
-                local anguloY = _G.B35_Shared and _G.B35_Shared.Angulo or 0
-                local offsetGlitch = _G.B35_Shared and _G.B35_Shared.Offset or Vector3.new(0,0,0)
-                
-                entidad.CFrame = CFrame.lookAt(nuevaPosicion, nuevaPosicion + direccionNormalizada) 
-                                 * CFrame.Angles(0, math.rad(anguloY), 0) 
-                                 * CFrame.new(offsetGlitch)
+                -- Movimiento limpio sin rotación ni desplazamiento de glitch
+                entidad.CFrame = CFrame.lookAt(nuevaPosicion, nuevaPosicion + direccionNormalizada)
                 
                 task.wait(PASO_TIEMPO)
             end
@@ -375,5 +336,5 @@ task.spawn(function()
     if sonidoAdvertencia then sonidoAdvertencia:Destroy() end
     if entidad then entidad:Destroy() end
     _G.B35_Shared = nil
-    print("[SISTEMA] Depth completó sus 3 pasadas con texturas animadas.")
+    print("[SISTEMA] Depth completó sus 3 pasadas.")
 end)
